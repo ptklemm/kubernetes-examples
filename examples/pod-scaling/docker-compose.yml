@@ -1,0 +1,25 @@
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    expose:
+      - "5672"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+  worker:
+    image: pklemm/amqp-consumer-worker:latest
+    deploy:
+      mode: replicated
+      replicas: 2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - AMQP_URL=amqp://guest:guest@rabbitmq:5672/%2F
+      - SLEEP_MIN=0.1
+      - SLEEP_MAX=1.0
